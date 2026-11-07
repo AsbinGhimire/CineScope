@@ -21,7 +21,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "testserver", "*"]
 
 
 # Application definition

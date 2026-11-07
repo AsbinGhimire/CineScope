@@ -1,0 +1,219 @@
+{% extends "movies/base.html" %}
+
+{% block title %}
+  {% if query %}
+    Search results for "{{ query }}" | CineScope
+  {% else %}
+    {{ category_label }} Movies | CineScope
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {# 1. Hero Featured Movie Billboard (Page 1 without active search) #}
+  {% if featured_movie and not query and page == 1 %}
+    <section class="hero-showcase">
+      {% if featured_movie.backdrop_url %}
+        <img class="hero-backdrop-img" src="{{ featured_movie.backdrop_url }}" alt="{{ featured_movie.title }}" loading="eager">
+      {% endif %}
+      <div class="hero-gradient-overlay"></div>
+      
+      <div class="hero-content">
+        <div class="hero-badge-pill">
+          <span>★</span>
+          <span>Featured Spotlight</span>
+        </div>
+        <h1 class="hero-title">{{ featured_movie.title }}</h1>
+        <div class="hero-meta">
+          <span class="rating-badge">★ {{ featured_movie.vote_average|floatformat:1 }}</span>
+          {% if featured_movie.release_year %}
+            <span class="hero-year">{{ featured_movie.release_year }}</span>
+          {% endif %}
+        </div>
+        <p class="hero-overview">{{ featured_movie.overview }}</p>
+        <div class="hero-actions">
+          <a href="{% url 'movies:detail' featured_movie.id %}" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4"/>
+              <path d="M12 8h.01"/>
+            </svg>
+            View Details
+          </a>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  {# 2. Active Search Banner #}
+  {% if query %}
+    <div class="search-filter-banner">
+      <div class="search-filter-info">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.3-4.3"/>
+        </svg>
+        <span>Search results for: <strong>"{{ query }}"</strong></span>
+        {% if total_results %}
+          <span class="section-count">({{ total_results }} found)</span>
+        {% endif %}
+      </div>
+      <a href="{% url 'movies:home' %}" class="search-clear-link">✕ Clear search</a>
+    </div>
+  {% endif %}
+
+  {# 3. Category Tabs & Section Header #}
+  <div class="section-nav-bar">
+    <div class="section-title-wrap">
+      <h2 class="section-title">
+        {% if query %}
+          Search Results
+        {% else %}
+          {{ category_label }}
+        {% endif %}
+      </h2>
+      {% if not query and total_results %}
+        <span class="section-count">Page {{ page }} of {{ total_pages }}</span>
+      {% endif %}
+    </div>
+
+    {% if not query %}
+      <nav class="category-tabs" aria-label="Movie Categories">
+        {% for cat in categories %}
+          <a href="{% url 'movies:home' %}?category={{ cat.key }}" 
+             class="category-pill {% if category == cat.key %}active{% endif %}">
+            <span>{{ cat.label }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  </div>
+
+  {# 4. Error Message #}
+  {% if error %}
+    <div class="state-container">
+      <div class="state-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <h3 class="state-title">Unable to Load Movies</h3>
+      <p class="state-desc">{{ error }}</p>
+      <a href="{% url 'movies:home' %}" class="btn btn-secondary">Try Again</a>
+    </div>
+  {% endif %}
+
+  {# 5. Movies Grid #}
+  {% if movies %}
+    <div class="movie-grid">
+      {% for movie in movies %}
+        <a class="movie-card" href="{% url 'movies:detail' movie.id %}" title="{{ movie.title }}">
+          <div class="movie-poster-wrap">
+            {% if movie.poster_url %}
+              <img class="movie-poster-img" src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy" data-fallback>
+              <div class="movie-poster-fallback" style="display: none;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect width="18" height="18" x="3" y="3" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="m21 15-5-5L5 21"/>
+                </svg>
+                <span>No Poster</span>
+              </div>
+            {% else %}
+              <div class="movie-poster-fallback">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect width="18" height="18" x="3" y="3" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="m21 15-5-5L5 21"/>
+                </svg>
+                <span>No Poster</span>
+              </div>
+            {% endif %}
+
+            {% if movie.vote_average %}
+              <span class="card-rating-badge">★ {{ movie.vote_average|floatformat:1 }}</span>
+            {% endif %}
+
+            {% if movie.release_year %}
+              <span class="card-year-badge">{{ movie.release_year }}</span>
+            {% endif %}
+          </div>
+
+          <div class="movie-card-info">
+            <h3 class="movie-card-title">{{ movie.title }}</h3>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+
+    {# 6. Pagination #}
+    {% if total_pages > 1 %}
+      <nav class="pagination-container" aria-label="Movies pagination">
+        {# Previous Button #}
+        {% if has_prev %}
+          <a class="page-btn" href="?{% if query %}q={{ query|urlencode }}&{% else %}category={{ category }}&{% endif %}page={{ prev_page }}" aria-label="Previous page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            <span>Prev</span>
+          </a>
+        {% else %}
+          <span class="page-btn disabled" aria-disabled="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            <span>Prev</span>
+          </span>
+        {% endif %}
+
+        {# Numeric page pills #}
+        {% for p in page_numbers %}
+          <a class="page-btn {% if p == page %}active{% endif %}" 
+             href="?{% if query %}q={{ query|urlencode }}&{% else %}category={{ category }}&{% endif %}page={{ p }}"
+             {% if p == page %}aria-current="page"{% endif %}>
+            {{ p }}
+          </a>
+        {% endfor %}
+
+        {# Next Button #}
+        {% if has_next %}
+          <a class="page-btn" href="?{% if query %}q={{ query|urlencode }}&{% else %}category={{ category }}&{% endif %}page={{ next_page }}" aria-label="Next page">
+            <span>Next</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </a>
+        {% else %}
+          <span class="page-btn disabled" aria-disabled="true">
+            <span>Next</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </span>
+        {% endif %}
+      </nav>
+    {% endif %}
+
+  {% elif not error %}
+    {# 7. Empty State #}
+    <div class="state-container">
+      <div class="state-icon">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.3-4.3"/>
+          <path d="m8 11 6 0"/>
+        </svg>
+      </div>
+      <h3 class="state-title">No Movies Found</h3>
+      <p class="state-desc">
+        {% if query %}
+          We couldn't find any movies matching "{{ query }}". Try searching with different keywords.
+        {% else %}
+          No movies are available in this category right now.
+        {% endif %}
+      </p>
+      <a href="{% url 'movies:home' %}" class="btn btn-primary">Browse Popular Movies</a>
+    </div>
+  {% endif %}
+{% endblock %}

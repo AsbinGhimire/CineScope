@@ -1,0 +1,242 @@
+{% extends "movies/base.html" %}
+
+{% block title %}{{ movie.title }} ({{ movie.release_year|default:'' }}) | CineScope{% endblock %}
+
+{% block content %}
+<div class="detail-page-wrapper">
+  {# Ambient Full-Width Backdrop #}
+  {% if movie.backdrop_url %}
+    <div class="detail-ambient-backdrop" aria-hidden="true">
+      <img class="detail-backdrop-image" src="{{ movie.backdrop_url }}" alt="">
+      <div class="detail-backdrop-gradient"></div>
+    </div>
+  {% endif %}
+
+  {# Back Navigation Link #}
+  <a href="{% url 'movies:home' %}" class="back-nav-link">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m15 18-6-6 6-6"/>
+    </svg>
+    <span>Back to Movies</span>
+  </a>
+
+  {# Main Hero Section #}
+  <div class="detail-hero-layout">
+    {# Poster Column #}
+    <div class="detail-poster-card">
+      {% if movie.poster_url %}
+        <img class="detail-poster-img" src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="eager">
+      {% else %}
+        <div class="movie-poster-fallback">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="m21 15-5-5L5 21"/>
+          </svg>
+          <span>No Poster Available</span>
+        </div>
+      {% endif %}
+    </div>
+
+    {# Information Pane #}
+    <div class="detail-info-pane">
+      <h1 class="detail-title">{{ movie.title }}</h1>
+      {% if movie.tagline %}
+        <p class="detail-tagline">"{{ movie.tagline }}"</p>
+      {% endif %}
+
+      {# Meta Row #}
+      <div class="detail-meta-row">
+        {% if movie.vote_average %}
+          <span class="meta-chip score-chip" title="TMDB Rating">
+            ★ {{ movie.vote_average|floatformat:1 }}
+            {% if movie.vote_count %}
+              <small style="opacity: 0.8; font-weight: 500;">({{ movie.vote_count }} votes)</small>
+            {% endif %}
+          </span>
+        {% endif %}
+
+        {% if movie.release_date %}
+          <span class="meta-chip" title="Release Date">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {{ movie.release_date }}
+          </span>
+        {% endif %}
+
+        {% if movie.formatted_runtime %}
+          <span class="meta-chip" title="Duration">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            {{ movie.formatted_runtime }}
+          </span>
+        {% endif %}
+
+        {% if movie.status %}
+          <span class="meta-chip" title="Production Status">{{ movie.status }}</span>
+        {% endif %}
+      </div>
+
+      {# Genres #}
+      {% if movie.genres %}
+        <div class="genre-tags-list">
+          {% for genre in movie.genres %}
+            <span class="genre-pill">{{ genre.name }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {# Action Buttons #}
+      <div class="detail-actions-row">
+        {% if movie.trailer_key %}
+          <button type="button" class="btn btn-primary" data-trailer-key="{{ movie.trailer_key }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Watch Trailer
+          </button>
+        {% endif %}
+
+        {% if movie.homepage %}
+          <a href="{{ movie.homepage }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Official Website
+          </a>
+        {% endif %}
+      </div>
+
+      {# Overview #}
+      {% if movie.overview %}
+        <div class="detail-section-block">
+          <h2 class="detail-section-heading">Overview</h2>
+          <p class="detail-overview-text">{{ movie.overview }}</p>
+        </div>
+      {% endif %}
+
+      {# Key Crew (Directors & Writers) #}
+      {% if movie.directors or movie.writers %}
+        <div class="crew-chips-container">
+          {% if movie.directors %}
+            <div class="crew-item">
+              <span class="crew-role">Directed By</span>
+              <span class="crew-name">{{ movie.directors|join:", " }}</span>
+            </div>
+          {% endif %}
+
+          {% if movie.writers %}
+            <div class="crew-item">
+              <span class="crew-role">Written By</span>
+              <span class="crew-name">{{ movie.writers|join:", " }}</span>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {# Financial Facts Grid #}
+      <div class="facts-grid">
+        <div class="fact-item">
+          <span class="fact-label">Budget</span>
+          <span class="fact-value">{{ movie.formatted_budget }}</span>
+        </div>
+        <div class="fact-item">
+          <span class="fact-label">Revenue</span>
+          <span class="fact-value">{{ movie.formatted_revenue }}</span>
+        </div>
+        <div class="fact-item">
+          <span class="fact-label">Language</span>
+          <span class="fact-value">{{ movie.original_language|upper }}</span>
+        </div>
+        <div class="fact-item">
+          <span class="fact-label">Status</span>
+          <span class="fact-value">{{ movie.status|default:"Released" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Top Billed Cast #}
+  {% if movie.top_cast %}
+    <section class="cast-section">
+      <h2 class="section-title">Top Billed Cast</h2>
+      <div class="cast-grid">
+        {% for actor in movie.top_cast %}
+          <div class="cast-card">
+            <div class="cast-avatar-wrap">
+              {% if actor.profile_url %}
+                <img class="cast-avatar-img" src="{{ actor.profile_url }}" alt="{{ actor.name }}" loading="lazy">
+              {% else %}
+                <div class="cast-avatar-fallback">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+              {% endif %}
+            </div>
+            <div class="cast-info">
+              <span class="cast-name">{{ actor.name }}</span>
+              <span class="cast-character">{{ actor.character }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {# Recommended Movies #}
+  {% if movie.top_recommendations %}
+    <section class="detail-section-block">
+      <h2 class="section-title" style="margin-bottom: 1.5rem;">More Like This</h2>
+      <div class="movie-grid">
+        {% for rec in movie.top_recommendations %}
+          <a class="movie-card" href="{% url 'movies:detail' rec.id %}" title="{{ rec.title }}">
+            <div class="movie-poster-wrap">
+              {% if rec.poster_url %}
+                <img class="movie-poster-img" src="{{ rec.poster_url }}" alt="{{ rec.title }}" loading="lazy" data-fallback>
+                <div class="movie-poster-fallback" style="display: none;">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect width="18" height="18" x="3" y="3" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="m21 15-5-5L5 21"/>
+                  </svg>
+                  <span>No Poster</span>
+                </div>
+              {% else %}
+                <div class="movie-poster-fallback">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect width="18" height="18" x="3" y="3" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="m21 15-5-5L5 21"/>
+                  </svg>
+                  <span>No Poster</span>
+                </div>
+              {% endif %}
+
+              {% if rec.vote_average %}
+                <span class="card-rating-badge">★ {{ rec.vote_average|floatformat:1 }}</span>
+              {% endif %}
+
+              {% if rec.release_year %}
+                <span class="card-year-badge">{{ rec.release_year }}</span>
+              {% endif %}
+            </div>
+            <div class="movie-card-info">
+              <h3 class="movie-card-title">{{ rec.title }}</h3>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
